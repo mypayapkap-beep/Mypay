@@ -1,22 +1,32 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: MyPay fintech API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
-    description: Health operations
+  - name: auth
+  - name: profile
+  - name: wallet
+  - name: deposits
+  - name: withdrawals
+  - name: upi
+  - name: tasks
+  - name: referrals
+  - name: notifications
+  - name: support
+  - name: public
+  - name: admin
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +34,2673 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ── AUTH ─────────────────────────────────────────────────────
+  /auth/otp/send:
+    post:
+      operationId: sendOtp
+      tags: [auth]
+      summary: Send OTP to mobile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtpSendInput"
+      responses:
+        "200":
+          description: OTP sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OtpSendResult"
+
+  /auth/otp/verify:
+    post:
+      operationId: verifyOtp
+      tags: [auth]
+      summary: Verify OTP and login/register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtpVerifyInput"
+      responses:
+        "200":
+          description: Verified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResult"
+
+  /auth/login/password:
+    post:
+      operationId: loginWithPassword
+      tags: [auth]
+      summary: Login with mobile + password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordLoginInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResult"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout current session
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /auth/session/refresh:
+    post:
+      operationId: refreshSession
+      tags: [auth]
+      summary: Refresh access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshTokenInput"
+      responses:
+        "200":
+          description: Refreshed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResult"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current authenticated user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeResult"
+
+  /auth/forgot-password:
+    post:
+      operationId: forgotPassword
+      tags: [auth]
+      summary: Request password reset OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForgotPasswordInput"
+      responses:
+        "200":
+          description: OTP sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /auth/reset-password:
+    post:
+      operationId: resetPassword
+      tags: [auth]
+      summary: Reset password with OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordInput"
+      responses:
+        "200":
+          description: Password reset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # ── PROFILE ──────────────────────────────────────────────────
+  /profile:
+    get:
+      operationId: getProfile
+      tags: [profile]
+      summary: Get own profile
+      responses:
+        "200":
+          description: Profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileResult"
+    patch:
+      operationId: updateProfile
+      tags: [profile]
+      summary: Update profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileUpdate"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileResult"
+
+  # ── WALLET ───────────────────────────────────────────────────
+  /wallet/balance:
+    get:
+      operationId: getWalletBalance
+      tags: [wallet]
+      summary: Get wallet balance
+      responses:
+        "200":
+          description: Wallet balance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WalletBalance"
+
+  /wallet/ledger:
+    get:
+      operationId: getWalletLedger
+      tags: [wallet]
+      summary: Get wallet ledger (paginated)
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: before
+          in: query
+          schema:
+            type: string
+        - name: currency
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Ledger entries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LedgerResult"
+
+  /wallet/transactions:
+    get:
+      operationId: getTransactions
+      tags: [wallet]
+      summary: Get transaction history
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: before
+          in: query
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Transactions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionsResult"
+
+  # ── DEPOSITS ─────────────────────────────────────────────────
+  /deposits:
+    get:
+      operationId: getDeposits
+      tags: [deposits]
+      summary: List user deposits
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: before
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deposits
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DepositsResult"
+    post:
+      operationId: createDeposit
+      tags: [deposits]
+      summary: Submit a deposit request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DepositInput"
+      responses:
+        "201":
+          description: Deposit created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DepositCreated"
+
+  # ── WITHDRAWALS ──────────────────────────────────────────────
+  /sell-requests:
+    get:
+      operationId: getUserSellRequests
+      tags: [withdrawals]
+      summary: List current user's sell requests
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: before
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Sell requests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSellRequestsResult"
+
+  /withdrawals:
+    get:
+      operationId: getWithdrawals
+      tags: [withdrawals]
+      summary: List user withdrawals
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: before
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Withdrawals
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WithdrawalsResult"
+    post:
+      operationId: createWithdrawal
+      tags: [withdrawals]
+      summary: Request a withdrawal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WithdrawalInput"
+      responses:
+        "201":
+          description: Withdrawal created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WithdrawalCreated"
+
+  # ── UPI ──────────────────────────────────────────────────────
+  /upi:
+    get:
+      operationId: getUpiAccounts
+      tags: [upi]
+      summary: List user UPI accounts
+      responses:
+        "200":
+          description: UPI accounts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpiAccountsResult"
+    post:
+      operationId: addUpiAccount
+      tags: [upi]
+      summary: Add a UPI account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpiAccountInput"
+      responses:
+        "201":
+          description: Account added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpiAccountCreated"
+
+  /upi/{id}/set-default:
+    patch:
+      operationId: setDefaultUpiAccount
+      tags: [upi]
+      summary: Set UPI account as default
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Default set
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /upi/{id}:
+    delete:
+      operationId: deleteUpiAccount
+      tags: [upi]
+      summary: Delete a UPI account
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # ── TASKS ────────────────────────────────────────────────────
+  /tasks:
+    get:
+      operationId: getTasks
+      tags: [tasks]
+      summary: Browse available tasks
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: before
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Tasks
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TasksResult"
+
+  /tasks/{id}/submit:
+    post:
+      operationId: submitTask
+      tags: [tasks]
+      summary: Submit task proof
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskSubmissionInput"
+      responses:
+        "201":
+          description: Submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /tasks/submissions:
+    get:
+      operationId: getMyTaskSubmissions
+      tags: [tasks]
+      summary: Get own task submissions
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: before
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Submissions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskSubmissionsResult"
+
+  # ── REFERRALS ────────────────────────────────────────────────
+  /referrals/stats:
+    get:
+      operationId: getReferralStats
+      tags: [referrals]
+      summary: Get referral stats
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReferralStats"
+
+  /referrals/tree:
+    get:
+      operationId: getReferralTree
+      tags: [referrals]
+      summary: Get referral tree
+      responses:
+        "200":
+          description: Referral tree
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReferralTree"
+
+  # ── NOTIFICATIONS ────────────────────────────────────────────
+  /notifications:
+    get:
+      operationId: getNotifications
+      tags: [notifications]
+      summary: List notifications
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: before
+          in: query
+          schema:
+            type: string
+        - name: unread
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationsResult"
+
+  /notifications/{id}/read:
+    patch:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark notification as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Marked read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /notifications/read-all:
+    patch:
+      operationId: markAllNotificationsRead
+      tags: [notifications]
+      summary: Mark all notifications as read
+      responses:
+        "200":
+          description: All marked read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # ── SUPPORT ──────────────────────────────────────────────────
+  /support:
+    get:
+      operationId: getSupportTickets
+      tags: [support]
+      summary: List own support tickets
+      responses:
+        "200":
+          description: Tickets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupportTicketsResult"
+    post:
+      operationId: createSupportTicket
+      tags: [support]
+      summary: Open a support ticket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SupportTicketInput"
+      responses:
+        "201":
+          description: Ticket created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupportTicketCreated"
+
+  # ── PUBLIC ───────────────────────────────────────────────────
+  /public/banners:
+    get:
+      operationId: getPublicBanners
+      tags: [public]
+      summary: Get active banners
+      responses:
+        "200":
+          description: Banners
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BannersResult"
+
+  /public/announcements:
+    get:
+      operationId: getPublicAnnouncements
+      tags: [public]
+      summary: Get active announcements
+      responses:
+        "200":
+          description: Announcements
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnnouncementsResult"
+
+  /public/settings:
+    get:
+      operationId: getPublicSettings
+      tags: [public]
+      summary: Get public settings
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicSettingsResult"
+
+  # ── ADMIN AUTH ───────────────────────────────────────────────
+  /admin/auth/login:
+    post:
+      operationId: adminLogin
+      tags: [admin]
+      summary: Admin login with email + password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminLoginInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminAuthResult"
+
+  /admin/auth/logout:
+    post:
+      operationId: adminLogout
+      tags: [admin]
+      summary: Admin logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/auth/me:
+    get:
+      operationId: getAdminMe
+      tags: [admin]
+      summary: Get current admin info
+      responses:
+        "200":
+          description: Admin info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminMeResult"
+
+  /admin/auth/create:
+    post:
+      operationId: createAdmin
+      tags: [admin]
+      summary: Create admin user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminCreateInput"
+      responses:
+        "201":
+          description: Admin created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminMeResult"
+
+  # ── ADMIN DASHBOARD ──────────────────────────────────────────
+  /admin/dashboard:
+    get:
+      operationId: getAdminDashboard
+      tags: [admin]
+      summary: Admin dashboard stats
+      responses:
+        "200":
+          description: Dashboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDashboard"
+
+  # ── ADMIN USERS ──────────────────────────────────────────────
+  /admin/users:
+    get:
+      operationId: adminListUsers
+      tags: [admin]
+      summary: List all users
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: before
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUsersResult"
+
+  /admin/users/{id}:
+    get:
+      operationId: adminGetUser
+      tags: [admin]
+      summary: Get full user profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserDetail"
+
+  /admin/users/{id}/suspend:
+    patch:
+      operationId: adminSuspendUser
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReasonInput"
+      responses:
+        "200":
+          description: Suspended
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/users/{id}/unsuspend:
+    patch:
+      operationId: adminUnsuspendUser
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Unsuspended
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/users/{id}/block:
+    patch:
+      operationId: adminBlockUser
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReasonInput"
+      responses:
+        "200":
+          description: Blocked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/users/{id}/unblock:
+    patch:
+      operationId: adminUnblockUser
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Unblocked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/users/{id}/wallet/freeze:
+    patch:
+      operationId: adminFreezeWallet
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReasonInput"
+      responses:
+        "200":
+          description: Frozen
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/users/{id}/wallet/unfreeze:
+    patch:
+      operationId: adminUnfreezeWallet
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Unfrozen
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # ── ADMIN DEPOSITS ───────────────────────────────────────────
+  /admin/deposits:
+    get:
+      operationId: adminListDeposits
+      tags: [admin]
+      summary: List all deposits
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: before
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deposits
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDepositsResult"
+
+  /admin/deposits/{id}/approve:
+    patch:
+      operationId: adminApproveDeposit
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminNotesInput"
+      responses:
+        "200":
+          description: Approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/deposits/{id}/reject:
+    patch:
+      operationId: adminRejectDeposit
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReasonInput"
+      responses:
+        "200":
+          description: Rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # ── ADMIN WITHDRAWALS ────────────────────────────────────────
+  /admin/withdrawals:
+    get:
+      operationId: adminListWithdrawals
+      tags: [admin]
+      summary: List all withdrawals
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: before
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Withdrawals
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminWithdrawalsResult"
+
+  /admin/withdrawals/{id}/process:
+    patch:
+      operationId: adminProcessWithdrawal
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminNotesInput"
+      responses:
+        "200":
+          description: Processed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/withdrawals/{id}/reject:
+    patch:
+      operationId: adminRejectWithdrawal
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReasonInput"
+      responses:
+        "200":
+          description: Rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # ── ADMIN SELL REQUESTS ──────────────────────────────────────
+  /admin/sell-requests:
+    post:
+      operationId: adminCreateSellRequest
+      tags: [admin]
+      summary: Create a sell request for a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminSellRequestInput"
+      responses:
+        "200":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+    get:
+      operationId: adminListSellRequests
+      tags: [admin]
+      summary: List all sell requests
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: before
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Sell requests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSellRequestsResult"
+
+  /admin/sell-requests/{id}/approve:
+    patch:
+      operationId: adminApproveSellRequest
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminNotesInput"
+      responses:
+        "200":
+          description: Approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/sell-requests/{id}/reject:
+    patch:
+      operationId: adminRejectSellRequest
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReasonInput"
+      responses:
+        "200":
+          description: Rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # ── ADMIN TASKS ──────────────────────────────────────────────
+  /admin/tasks:
+    get:
+      operationId: adminListTasks
+      tags: [admin]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: isActive
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Tasks
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminTasksResult"
+    post:
+      operationId: adminCreateTask
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskInput"
+      responses:
+        "201":
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskCreated"
+
+  /admin/tasks/{id}:
+    patch:
+      operationId: adminUpdateTask
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskCreated"
+    delete:
+      operationId: adminDeleteTask
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/tasks/submissions:
+    get:
+      operationId: adminListSubmissions
+      tags: [admin]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Submissions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSubmissionsResult"
+
+  /admin/tasks/submissions/{id}/approve:
+    patch:
+      operationId: adminApproveSubmission
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/tasks/submissions/{id}/reject:
+    patch:
+      operationId: adminRejectSubmission
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReasonInput"
+      responses:
+        "200":
+          description: Rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # ── ADMIN UPI ────────────────────────────────────────────────
+  /admin/upi:
+    get:
+      operationId: adminListUpiAccounts
+      tags: [admin]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: UPI accounts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUpiResult"
+
+  /admin/upi/{id}/approve:
+    patch:
+      operationId: adminApproveUpi
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminNotesInput"
+      responses:
+        "200":
+          description: Approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/upi/{id}/reject:
+    patch:
+      operationId: adminRejectUpi
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReasonInput"
+      responses:
+        "200":
+          description: Rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # ── ADMIN SETTINGS ───────────────────────────────────────────
+  /admin/settings:
+    get:
+      operationId: adminGetSettings
+      tags: [admin]
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSettingsResult"
+
+  /admin/settings/{key}:
+    patch:
+      operationId: adminUpdateSetting
+      tags: [admin]
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingValueInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/banners:
+    post:
+      operationId: adminCreateBanner
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BannerInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/banners/{id}:
+    delete:
+      operationId: adminDeleteBanner
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/announcements:
+    post:
+      operationId: adminCreateAnnouncement
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnnouncementInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/announcements/{id}:
+    delete:
+      operationId: adminDeleteAnnouncement
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/logs:
+    get:
+      operationId: adminGetLogs
+      tags: [admin]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: before
+          in: query
+          schema:
+            type: string
+        - name: action
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Audit logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminLogsResult"
+
+  /admin/support:
+    get:
+      operationId: adminListSupportTickets
+      tags: [admin]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Support tickets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSupportResult"
+
+  /admin/support/{id}/respond:
+    patch:
+      operationId: adminRespondToTicket
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SupportResponseInput"
+      responses:
+        "200":
+          description: Responded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    SuccessResponse:
+      type: object
+      required: [success]
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+
+    # ── Auth schemas ──────────────────────────────────────────
+    OtpSendInput:
+      type: object
+      required: [mobile, purpose]
+      properties:
+        mobile:
+          type: string
+        purpose:
+          type: string
+          enum: [register, login]
+        referralCode:
+          type: string
+
+    OtpSendResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        otp:
+          type: string
+
+    OtpVerifyInput:
+      type: object
+      required: [mobile, otp, purpose]
+      properties:
+        mobile:
+          type: string
+        otp:
+          type: string
+        purpose:
+          type: string
+        referralCode:
+          type: string
+
+    PasswordLoginInput:
+      type: object
+      required: [mobile, password]
+      properties:
+        mobile:
+          type: string
+        password:
+          type: string
+
+    RefreshTokenInput:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+
+    ForgotPasswordInput:
+      type: object
+      required: [mobile]
+      properties:
+        mobile:
+          type: string
+
+    ResetPasswordInput:
+      type: object
+      required: [mobile, otp, newPassword]
+      properties:
+        mobile:
+          type: string
+        otp:
+          type: string
+        newPassword:
+          type: string
+
+    AuthResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        user:
+          $ref: "#/components/schemas/UserSummary"
+        session:
+          $ref: "#/components/schemas/Session"
+
+    Session:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        expiresAt:
+          type: ["integer", "null"]
+
+    UserSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        mobile:
+          type: string
+        referralCode:
+          type: string
+
+    MeResult:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/UserSummary"
+
+    # ── Profile ──────────────────────────────────────────────
+    ProfileResult:
+      type: object
+      properties:
+        profile:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            mobile:
+              type: string
+            referralCode:
+              type: string
+            profileImageUrl:
+              type: ["string", "null"]
+            isActive:
+              type: boolean
+            isSuspended:
+              type: boolean
+            isBlocked:
+              type: boolean
+            createdAt:
+              type: string
+
+    ProfileUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        profileImageUrl:
+          type: string
+
+    # ── Wallet ───────────────────────────────────────────────
+    WalletBalance:
+      type: object
+      properties:
+        inrBalance:
+          type: string
+        usdtBalance:
+          type: string
+        isFrozen:
+          type: boolean
+
+    LedgerEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        currency:
+          type: string
+        type:
+          type: string
+        amount:
+          type: string
+        beforeBalance:
+          type: string
+        afterBalance:
+          type: string
+        description:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    LedgerResult:
+      type: object
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/LedgerEntry"
+        hasMore:
+          type: boolean
+
+    TransactionItem:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        currency:
+          type: string
+        amount:
+          type: string
+        status:
+          type: string
+        description:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    TransactionsResult:
+      type: object
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/TransactionItem"
+        hasMore:
+          type: boolean
+
+    # ── Deposits ─────────────────────────────────────────────
+    DepositItem:
+      type: object
+      properties:
+        id:
+          type: string
+        amount:
+          type: string
+        utrNumber:
+          type: string
+        paymentMethod:
+          type: string
+        screenshotUrl:
+          type: ["string", "null"]
+        status:
+          type: string
+        adminNotes:
+          type: ["string", "null"]
+        approvedAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    DepositsResult:
+      type: object
+      properties:
+        deposits:
+          type: array
+          items:
+            $ref: "#/components/schemas/DepositItem"
+        hasMore:
+          type: boolean
+
+    DepositInput:
+      type: object
+      required: [amount, utrNumber, paymentMethod]
+      properties:
+        amount:
+          type: number
+        utrNumber:
+          type: string
+        paymentMethod:
+          type: string
+        screenshotUrl:
+          type: string
+
+    DepositCreated:
+      type: object
+      properties:
+        success:
+          type: boolean
+        deposit:
+          $ref: "#/components/schemas/DepositItem"
+
+    # ── Withdrawals ──────────────────────────────────────────
+    WithdrawalItem:
+      type: object
+      properties:
+        id:
+          type: string
+        amount:
+          type: string
+        status:
+          type: string
+        upiAccountId:
+          type: string
+        adminNotes:
+          type: ["string", "null"]
+        processedAt:
+          type: ["string", "null"]
+        rejectedReason:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    WithdrawalsResult:
+      type: object
+      properties:
+        withdrawals:
+          type: array
+          items:
+            $ref: "#/components/schemas/WithdrawalItem"
+        hasMore:
+          type: boolean
+
+    WithdrawalInput:
+      type: object
+      required: [amount, upiAccountId]
+      properties:
+        amount:
+          type: number
+        upiAccountId:
+          type: string
+
+    WithdrawalCreated:
+      type: object
+      properties:
+        success:
+          type: boolean
+        withdrawal:
+          $ref: "#/components/schemas/WithdrawalItem"
+
+    # ── UPI ──────────────────────────────────────────────────
+    UpiAccountItem:
+      type: object
+      properties:
+        id:
+          type: string
+        upiId:
+          type: string
+        accountHolderName:
+          type: string
+        provider:
+          type: string
+        status:
+          type: string
+        isDefault:
+          type: boolean
+        createdAt:
+          type: string
+
+    UpiAccountsResult:
+      type: object
+      properties:
+        accounts:
+          type: array
+          items:
+            $ref: "#/components/schemas/UpiAccountItem"
+
+    UpiAccountInput:
+      type: object
+      required: [upiId, accountHolderName, provider]
+      properties:
+        upiId:
+          type: string
+        accountHolderName:
+          type: string
+        provider:
+          type: string
+
+    UpiAccountCreated:
+      type: object
+      properties:
+        success:
+          type: boolean
+        account:
+          $ref: "#/components/schemas/UpiAccountItem"
+
+    # ── Tasks ────────────────────────────────────────────────
+    TaskItem:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        amount:
+          type: string
+        durationDays:
+          type: integer
+        status:
+          type: string
+        imageUrl:
+          type: ["string", "null"]
+        totalSubmissions:
+          type: integer
+        maxSubmissions:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+
+    TasksResult:
+      type: object
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskItem"
+        hasMore:
+          type: boolean
+
+    TaskSubmissionInput:
+      type: object
+      required: [proofImageUrl]
+      properties:
+        proofImageUrl:
+          type: string
+        notes:
+          type: string
+
+    TaskSubmissionItem:
+      type: object
+      properties:
+        id:
+          type: string
+        taskId:
+          type: string
+        proofImageUrl:
+          type: string
+        notes:
+          type: ["string", "null"]
+        status:
+          type: string
+        rejectedReason:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    TaskSubmissionsResult:
+      type: object
+      properties:
+        submissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskSubmissionItem"
+        hasMore:
+          type: boolean
+
+    # ── Referrals ────────────────────────────────────────────
+    ReferralStats:
+      type: object
+      properties:
+        totalReferrals:
+          type: integer
+        levelA:
+          type: integer
+        levelB:
+          type: integer
+        levelC:
+          type: integer
+        totalEarned:
+          type: string
+        pendingRewards:
+          type: integer
+
+    ReferralTree:
+      type: object
+      properties:
+        referrals:
+          type: array
+          items:
+            type: object
+
+    # ── Notifications ────────────────────────────────────────
+    NotificationItem:
+      type: object
+      properties:
+        id:
+          type: string
+        category:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        isRead:
+          type: boolean
+        referenceId:
+          type: ["string", "null"]
+        referenceType:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    NotificationsResult:
+      type: object
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationItem"
+        unreadCount:
+          type: integer
+        hasMore:
+          type: boolean
+
+    # ── Support ──────────────────────────────────────────────
+    SupportTicketItem:
+      type: object
+      properties:
+        id:
+          type: string
+        subject:
+          type: string
+        message:
+          type: string
+        status:
+          type: string
+        attachmentUrl:
+          type: ["string", "null"]
+        adminResponse:
+          type: ["string", "null"]
+        resolvedAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    SupportTicketsResult:
+      type: object
+      properties:
+        tickets:
+          type: array
+          items:
+            $ref: "#/components/schemas/SupportTicketItem"
+
+    SupportTicketInput:
+      type: object
+      required: [subject, message]
+      properties:
+        subject:
+          type: string
+        message:
+          type: string
+        attachmentUrl:
+          type: string
+
+    SupportTicketCreated:
+      type: object
+      properties:
+        success:
+          type: boolean
+        ticket:
+          $ref: "#/components/schemas/SupportTicketItem"
+
+    # ── Public ───────────────────────────────────────────────
+    BannerItem:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        imageUrl:
+          type: string
+        linkUrl:
+          type: ["string", "null"]
+        sortOrder:
+          type: integer
+
+    BannersResult:
+      type: object
+      properties:
+        banners:
+          type: array
+          items:
+            $ref: "#/components/schemas/BannerItem"
+
+    AnnouncementItem:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        type:
+          type: string
+        isPinned:
+          type: boolean
+        createdAt:
+          type: string
+
+    AnnouncementsResult:
+      type: object
+      properties:
+        announcements:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnnouncementItem"
+
+    PublicSettingsResult:
+      type: object
+      properties:
+        settings:
+          type: object
+
+    # ── Admin Auth ───────────────────────────────────────────
+    AdminLoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    AdminAuthResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        admin:
+          $ref: "#/components/schemas/AdminInfo"
+        session:
+          $ref: "#/components/schemas/Session"
+
+    AdminCreateInput:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+        setupKey:
+          type: string
+
+    AdminInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+
+    AdminMeResult:
+      type: object
+      properties:
+        admin:
+          $ref: "#/components/schemas/AdminInfo"
+
+    # ── Admin Dashboard ──────────────────────────────────────
+    AdminDashboard:
+      type: object
+      properties:
+        overview:
+          type: object
+          properties:
+            totalUsers:
+              type: integer
+            newUsersLast30d:
+              type: integer
+            pendingDeposits:
+              type: integer
+            pendingWithdrawals:
+              type: integer
+            pendingTaskSubmissions:
+              type: integer
+            openSupportTickets:
+              type: integer
+            pendingUpiAccounts:
+              type: integer
+            flaggedFraudLast24h:
+              type: integer
+            totalTokens:
+              type: string
+            totalDepositsCount:
+              type: integer
+            totalDepositsAmount:
+              type: string
+            totalWithdrawalsCount:
+              type: integer
+            totalWithdrawalsAmount:
+              type: string
+        financials:
+          type: object
+
+    # ── Admin Users ──────────────────────────────────────────
+    AdminUserSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        mobile:
+          type: string
+        referralCode:
+          type: string
+        isActive:
+          type: boolean
+        isSuspended:
+          type: boolean
+        isBlocked:
+          type: boolean
+        inrBalance:
+          type: ["string", "null"]
+        walletFrozen:
+          type: ["boolean", "null"]
+        createdAt:
+          type: string
+
+    AdminUsersResult:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminUserSummary"
+        hasMore:
+          type: boolean
+        nextCursor:
+          type: ["string", "null"]
+
+    AdminUserDetail:
+      type: object
+      properties:
+        user:
+          type: object
+
+    ReasonInput:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+
+    AdminNotesInput:
+      type: object
+      properties:
+        adminNotes:
+          type: string
+
+    # ── Admin Deposits ───────────────────────────────────────
+    AdminDepositItem:
+      type: object
+      properties:
+        id:
+          type: string
+        amount:
+          type: string
+        utrNumber:
+          type: string
+        paymentMethod:
+          type: string
+        screenshotUrl:
+          type: ["string", "null"]
+        status:
+          type: string
+        adminNotes:
+          type: ["string", "null"]
+        userId:
+          type: string
+        userName:
+          type: ["string", "null"]
+        userMobile:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    AdminDepositsResult:
+      type: object
+      properties:
+        deposits:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminDepositItem"
+        hasMore:
+          type: boolean
+
+    # ── Admin Withdrawals ────────────────────────────────────
+    AdminWithdrawalItem:
+      type: object
+      properties:
+        id:
+          type: string
+        amount:
+          type: string
+        status:
+          type: string
+        userId:
+          type: string
+        userName:
+          type: ["string", "null"]
+        userMobile:
+          type: ["string", "null"]
+        upiId:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    AdminWithdrawalsResult:
+      type: object
+      properties:
+        withdrawals:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminWithdrawalItem"
+        hasMore:
+          type: boolean
+
+    # ── Admin Tasks ──────────────────────────────────────────
+    TaskInput:
+      type: object
+      required: [name, description, amount]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        amount:
+          type: number
+        durationDays:
+          type: integer
+        maxSubmissions:
+          type: integer
+        imageUrl:
+          type: string
+
+    TaskUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        amount:
+          type: number
+        isActive:
+          type: boolean
+        imageUrl:
+          type: string
+
+    TaskCreated:
+      type: object
+      properties:
+        success:
+          type: boolean
+        task:
+          $ref: "#/components/schemas/TaskItem"
+
+    AdminTasksResult:
+      type: object
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskItem"
+        hasMore:
+          type: boolean
+
+    AdminSubmissionItem:
+      type: object
+      properties:
+        id:
+          type: string
+        taskId:
+          type: string
+        userId:
+          type: string
+        proofImageUrl:
+          type: string
+        status:
+          type: string
+        taskName:
+          type: ["string", "null"]
+        taskAmount:
+          type: ["string", "null"]
+        userName:
+          type: ["string", "null"]
+        userMobile:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    AdminSubmissionsResult:
+      type: object
+      properties:
+        submissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminSubmissionItem"
+        hasMore:
+          type: boolean
+
+    # ── Admin UPI ────────────────────────────────────────────
+    AdminUpiItem:
+      type: object
+      properties:
+        id:
+          type: string
+        upiId:
+          type: string
+        accountHolderName:
+          type: string
+        provider:
+          type: string
+        status:
+          type: string
+        userId:
+          type: string
+        userName:
+          type: ["string", "null"]
+        userMobile:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    AdminUpiResult:
+      type: object
+      properties:
+        accounts:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminUpiItem"
+        hasMore:
+          type: boolean
+
+    # ── Admin Settings ───────────────────────────────────────
+    SettingItem:
+      type: object
+      properties:
+        id:
+          type: string
+        key:
+          type: string
+        value:
+          type: string
+        description:
+          type: ["string", "null"]
+        isPublic:
+          type: boolean
+
+    AdminSettingsResult:
+      type: object
+      properties:
+        settings:
+          type: array
+          items:
+            $ref: "#/components/schemas/SettingItem"
+
+    SettingValueInput:
+      type: object
+      required: [value]
+      properties:
+        value:
+          type: string
+
+    BannerInput:
+      type: object
+      required: [title, imageUrl]
+      properties:
+        title:
+          type: string
+        imageUrl:
+          type: string
+        linkUrl:
+          type: string
+        sortOrder:
+          type: integer
+        startsAt:
+          type: string
+        endsAt:
+          type: string
+
+    AnnouncementInput:
+      type: object
+      required: [title, content]
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        type:
+          type: string
+        isPinned:
+          type: boolean
+        startsAt:
+          type: string
+        endsAt:
+          type: string
+
+    AdminLogsResult:
+      type: object
+      properties:
+        logs:
+          type: array
+          items:
+            type: object
+        hasMore:
+          type: boolean
+
+    AdminSupportItem:
+      type: object
+      properties:
+        id:
+          type: string
+        subject:
+          type: string
+        message:
+          type: string
+        status:
+          type: string
+        adminResponse:
+          type: ["string", "null"]
+        userId:
+          type: string
+        userName:
+          type: ["string", "null"]
+        userMobile:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    AdminSupportResult:
+      type: object
+      properties:
+        tickets:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminSupportItem"
+        hasMore:
+          type: boolean
+
+    SupportResponseInput:
+      type: object
+      required: [response]
+      properties:
+        response:
+          type: string
+        status:
+          type: string
+
+    # ── Sell Requests ─────────────────────────────────────────
+    AdminSellRequestInput:
+      type: object
+      required: [mobile, tokenAmount]
+      properties:
+        mobile:
+          type: string
+        tokenAmount:
+          type: number
+        adminNotes:
+          type: string
+
+    AdminSellRequestItem:
+      type: object
+      properties:
+        id:
+          type: string
+        tokenAmount:
+          type: string
+        sellAmount:
+          type: string
+        status:
+          type: string
+        adminNotes:
+          type: ["string", "null"]
+        approvedAt:
+          type: ["string", "null"]
+        rejectedAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        userId:
+          type: string
+        userName:
+          type: ["string", "null"]
+        userMobile:
+          type: ["string", "null"]
+        userSellUpi:
+          type: ["string", "null"]
+        userSellUpiProvider:
+          type: ["string", "null"]
+
+    AdminSellRequestsResult:
+      type: object
+      properties:
+        sellRequests:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminSellRequestItem"
+        hasMore:
+          type: boolean
+
+    UserSellRequestItem:
+      type: object
+      properties:
+        id:
+          type: string
+        tokenAmount:
+          type: string
+        sellAmount:
+          type: string
+        status:
+          type: string
+        adminNotes:
+          type: ["string", "null"]
+        approvedAt:
+          type: ["string", "null"]
+        rejectedAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    UserSellRequestsResult:
+      type: object
+      properties:
+        sellRequests:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserSellRequestItem"
+        hasMore:
+          type: boolean

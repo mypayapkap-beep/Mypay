@@ -35,6 +35,7 @@ minimumReleaseAgeExclude:
   - stripe-replit-sync
 
 packages:
+  - client
   - artifacts/*
   - lib/*
   - lib/integrations/*

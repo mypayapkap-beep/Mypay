@@ -1,0 +1,1 @@
+- [MyPay project setup](mypay-setup.md) — Stack, seed credentials, route layout, port config, and key gotchas for the MyPay fintech app.

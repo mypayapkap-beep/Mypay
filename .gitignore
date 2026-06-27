@@ -47,3 +47,19 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Android build artifacts
+client/android/.gradle
+client/android/app/build
+client/android/build
+client/android/local.properties
+*.keystore
+*.jks
+
+# Environment secrets
+.env
+.env.local
+.env.production
+
+# Zip uploads
+attached_assets/*.zip

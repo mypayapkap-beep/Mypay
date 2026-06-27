@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>MyPay</title>
+    <meta name="description" content="Earn, Save &amp; Transfer — Faster. Complete tasks, earn rewards, and manage your money." />
+    <meta name="robots" content="index, follow" />
+
+    <!-- PWA meta -->
+    <meta name="application-name" content="MyPay" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="MyPay" />
+    <meta name="msapplication-TileColor" content="#0f172a" />
+    <meta name="msapplication-tap-highlight" content="no" />
+
+    <!-- Splash screen colors -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="MyPay" />
+    <meta property="og:description" content="Earn, Save &amp; Transfer — Faster." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="MyPay" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <style>
+      /* Splash screen — shown while app boots */
+      #splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: #0f172a;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        transition: opacity 0.4s ease;
+      }
+      #splash.fade-out {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #splash .logo {
+        width: 72px;
+        height: 72px;
+        border-radius: 20px;
+        background: #1e3a8a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 36px;
+        font-weight: 800;
+        color: white;
+        font-family: Inter, sans-serif;
+      }
+      #splash .name {
+        font-size: 24px;
+        font-weight: 700;
+        color: white;
+        font-family: Inter, sans-serif;
+        letter-spacing: -0.5px;
+      }
+      #splash .tagline {
+        font-size: 13px;
+        color: rgba(255,255,255,0.5);
+        font-family: Inter, sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Splash screen -->
+    <div id="splash">
+      <div class="logo">M</div>
+      <div class="name">MyPay</div>
+      <div class="tagline">Earn · Save · Transfer</div>
+    </div>
+
+    <div id="root"></div>
+
+    <!-- Capture beforeinstallprompt BEFORE React mounts to avoid the race condition
+         where the browser fires the event before useEffect registers the listener. -->
+    <script>
+      window.__pwaInstallEvent = null;
+      window.addEventListener('beforeinstallprompt', function(e) {
+        e.preventDefault();
+        window.__pwaInstallEvent = e;
+        // Notify any already-mounted React listener
+        window.dispatchEvent(new CustomEvent('pwa-install-ready'));
+      });
+    </script>
+
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
