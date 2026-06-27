@@ -1,1 +1,2 @@
 - [MyPay project setup](mypay-setup.md) — Stack, seed credentials, route layout, port config, and key gotchas for the MyPay fintech app.
+- [Artifact previewPath pitfall](artifact-previewpath.md) — previewPath must be "/" not "/api" or the preview pane hangs forever on GET /api/.
