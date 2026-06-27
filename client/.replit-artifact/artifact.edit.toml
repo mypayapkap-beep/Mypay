@@ -1,0 +1,19 @@
+kind = "design"
+previewPath = "/"
+title = "MyPay Frontend"
+version = "1.0.0"
+id = "mypay-frontend-client"
+
+[[services]]
+localPort = 5173
+name = "MyPay Frontend"
+paths = ["/"]
+
+[services.development]
+run = "pnpm --filter @workspace/client run dev"
+
+[services.production.build]
+args = ["pnpm", "--filter", "@workspace/client", "run", "build"]
+
+[services.production.run]
+args = ["pnpm", "--filter", "@workspace/client", "run", "serve"]
